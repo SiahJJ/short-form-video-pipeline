@@ -49,6 +49,17 @@ through a tiny wrapper ([`ops/run_awake.py`](../ops/run_awake.py)) that calls
 `SetThreadExecutionState(ES_CONTINUOUS | ES_SYSTEM_REQUIRED)` for the job's lifetime, then releases it. The PC
 then goes back to sleep on its normal idle timer. No power-plan changes and no "never sleep".
 
+### Going back to sleep safely
+Windows' idle timer turned out to be unreliable: a publisher that keeps looping between posts holds the PC
+awake for hours. So every work window ends by starting a **safe-sleep** step that waits (up to 3 h) until:
+- nobody has touched the keyboard or mouse for 15 minutes (it never sleeps under someone using the PC);
+- no clipping job, download or encode is running;
+- no upload is in flight: an Instagram publishing cycle that started but hasn't logged its exit code, the
+  Facebook publisher's lock file, or the TikTok sender's task.
+
+Then it calls `SetSuspendState`. If it never becomes safe, it leaves the PC alone, and the next wake timer
+still fires either way.
+
 ### No pop-up windows
 Console programs started by Task Scheduler normally flash a window and steal focus (a problem mid-game). Every
 action goes through [`ops/run_hidden.vbs`](../ops/run_hidden.vbs):

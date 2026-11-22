@@ -21,6 +21,17 @@ container that ended in `ERROR`/`EXPIRED` with `publishRequestStarted=false`).
 | Facebook Reels | 30 / 24 h | 28 / 24 h cap, ≥30 min gap, ≥30 min after the Instagram post |
 | YouTube | Daily upload quota | Highest-scoring clips first; cooldown when the quota is hit |
 
+### Facebook: fewer, better, visibly edited
+A brand-new Page that reposts other creators' clips gets almost no distribution, and volume makes it worse.
+The Facebook roll-over therefore:
+- posts only the **best-scored** Instagram Reels (about 10 a day, at most 2 per work window) and skips any
+  older than 4 days instead of queueing them forever;
+- burns the clip's hook into the first 4 seconds as a title card (ffmpeg `drawtext`, falling back to the
+  original file on any error), so the Reel adds something rather than being a bare re-upload;
+- rebuilds the hashtags with the current engine at post time;
+- reads real Reel plays from `video_insights` when the `read_insights` permission is granted, and otherwise
+  falls back to the `views` field.
+
 ## 4. Gate content before it can be queued
 - **Rights:** YouTube Data API `status.license == creativeCommon`, or a creator on the attested list.
 - **Publication cutoff date,** with per-video exceptions in a reviewed config file.

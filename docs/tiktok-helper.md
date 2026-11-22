@@ -70,6 +70,21 @@ Fix (`PENDING_TRUTH_V1`):
   and is never sent for 0.
 - A ghost's clip is re-queued as a fresh upload. That's safe because the original never reached the creator.
 
+## Lesson learned: a stale count can freeze the hold
+After a refusal the uploader holds for an hour, lifting early "as soon as the pending count drops". Two bugs
+combined into an hour of idling with an almost-empty inbox:
+- Right after the PC woke, status checks failed (the network wasn't up yet) and were counted as "not
+  pending". The count read 1 when TikTok had 4.
+- The hold stored that wrong 1 as its baseline, so "drops below 1" could never happen, even after the
+  creator posted 3 drafts.
+
+Fix (`HOLD_FIX_V1`):
+- A failed status check keeps the last known state instead of meaning "posted".
+- A refusal re-reads the true count.
+- The hold's baseline rises to the largest count it sees, so posting any draft lifts it.
+- The gate's limit is set to what TikTok actually enforces for the account (4 here), so the uploader stops
+  before it gets refused.
+
 ## Minimal implementation
 [`src/dashboard/helper_server.py`](../src/dashboard/helper_server.py) is a self-contained version of the
 helper's server side: a CSV checklist, range-streamed previews, and an origin- and header-guarded "mark
