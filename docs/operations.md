@@ -57,8 +57,18 @@ awake for hours. So every work window ends by starting a **safe-sleep** step tha
 - no upload is in flight: an Instagram publishing cycle that started but hasn't logged its exit code, the
   Facebook publisher's lock file, or the TikTok sender's task.
 
-Then it calls `SetSuspendState`. If it never becomes safe, it leaves the PC alone, and the next wake timer
+Then it calls `SetSuspendState`. The step runs as **its own on-demand scheduled task**, started by the
+window on its way out. The first version was a child process, and Task Scheduler silently killed it when
+the window's task finished, so the PC never slept. If it never becomes safe, it leaves the PC alone, and the next wake timer
 still fires either way.
+
+### Coming back from a power cut
+- BIOS **Restore on AC power loss = Power On** turns the PC back on.
+- **Automatic sign-in** brings up the session the posting tasks need. A sign-in task locks the screen after
+  90 s if nobody has touched the keyboard.
+- A **boot notice** runs before sign-in and emails why the PC went down (an unexpected-shutdown event means
+  power loss or a crash; a planned-restart event means Windows Update) and whether it signed itself in. If it
+  didn't, sign in remotely (Chrome Remote Desktop works on Windows Home).
 
 ### No pop-up windows
 Console programs started by Task Scheduler normally flash a window and steal focus (a problem mid-game). Every
