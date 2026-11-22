@@ -54,6 +54,22 @@ Fix: `outcome_unknown` items that have a `publish_id` are included in the read-o
 `SEND_TO_USER_INBOX` moves them to "In your inbox" and `PUBLISH_COMPLETE` to "Posted". Nothing is ever
 uploaded twice; the state just stops lying.
 
+## Lesson learned: count pending drafts the way TikTok does
+The gate first counted "drafts waiting" from the helper's own checkmarks. Two things broke that:
+- **Checkmarks aren't TikTok's state.** Tapping **Posted** on the helper, or uploading the file yourself,
+  doesn't publish the inbox draft. TikTok kept counting those drafts, while the gate thought 0 were waiting.
+- **Invisible "ghost" uploads.** Two uploads TikTok reported as `SEND_TO_USER_INBOX` never appeared in the
+  app, so the creator couldn't clear them.
+
+Fix (`PENDING_TRUTH_V1`):
+- Every run asks TikTok's status endpoint which recent uploads are still `SEND_TO_USER_INBOX`, ghosts
+  included, and gates on **that** number.
+- When blocked, it **probes once an hour**. A refused init creates nothing, so probing is harmless, and it
+  catches drafts TikTok has expired while its status endpoint still lists them.
+- The reminder email names exactly which drafts are blocking, marks ghosts as "not visible, will expire",
+  and is never sent for 0.
+- A ghost's clip is re-queued as a fresh upload. That's safe because the original never reached the creator.
+
 ## Minimal implementation
 [`src/dashboard/helper_server.py`](../src/dashboard/helper_server.py) is a self-contained version of the
 helper's server side: a CSV checklist, range-streamed previews, and an origin- and header-guarded "mark
