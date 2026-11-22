@@ -65,18 +65,19 @@ credentials. Each is covered by tests.
 | [`src/storage/guardian.py`](src/storage/guardian.py) | Rule-ordered disk cleanup that only deletes what every consumer has confirmed; aborts on unknown state |
 | [`src/storage/dedupe.py`](src/storage/dedupe.py) | Atomic hard-link dedupe: duplicate multi-GB sources stored once |
 | [`src/ranking/priority.py`](src/ranking/priority.py) | Per-platform prioritisation: YouTube best-score-first with peak-hour `publishAt`, Instagram priority with trend, staleness and a shrunk creator-performance bonus |
+| [`src/analytics/performance.py`](src/analytics/performance.py) | Performance loop: fixed-age metric snapshots, log-lift vs platform median, shrunk per-factor effects, creator bonus and best posting hours |
 | [`src/reframe/motion_reframe.py`](src/reframe/motion_reframe.py) | Sports 16:9 → 9:16 reframing prototype: optical flow with camera-pan compensation, cut detection, camera-operator smoothing |
 | [`src/dashboard/helper_server.py`](src/dashboard/helper_server.py) | Phone helper for TikTok inbox drafts: caption copy, range-streamed previews, CSRF-guarded "mark posted" |
 | [`ops/`](ops) | Wake-capable hidden scheduled tasks, stay-awake wrapper, edge-triggered email alerts, backup archiver |
 
 ```bash
 pip install numpy pytest
-python -m pytest -q        # 32 tests
+python -m pytest -q        # 37 tests
 ```
 
 ## Guides
 - [architecture.md](docs/architecture.md): components, data flow, state
-- [operations.md](docs/operations.md): **waking the PC on schedule, keeping the disk from filling up, notifications**
+- [operations.md](docs/operations.md): **work windows (PC awake ~8 h/day instead of 24), keeping the disk from filling up, notifications**
 - [remote-access-tailscale.md](docs/remote-access-tailscale.md): **public video URLs with Tailscale Funnel, a private phone dashboard with Tailscale Serve**
 - [tiktok-helper.md](docs/tiktok-helper.md): **TikTok inbox uploads and the phone helper for captions**
 - [prioritization.md](docs/prioritization.md): **how the AI score, trends and past performance decide what posts where, first**

@@ -6,6 +6,25 @@ something needs you.
 
 ## 1. Waking up and running on schedule
 
+### Work windows: on only when needed {#work-windows}
+The first version let ~15 tasks wake the PC on their own timers (some every 5 minutes), so it effectively
+never slept. Now **only one scheduler wakes the PC**:
+
+| Window | When | What happens |
+|---|---|---|
+| Posting | 6 times a day, at the **best-performing hours** learned by the performance loop (for example 00, 09, 12, 15, 17, 20) | Instagram and Facebook post back to back (5–10 min gaps) for ~50 min; TikTok drafts are sent; YouTube uploads go out with scheduled `publishAt` so they go live at peak times even while the PC sleeps |
+| Night | 02:30 | Discovery, downloads, clipping, metadata, cleanup, metrics + analysis; stays only while clipping/downloading is active (45 min – 4 h), then **re-plans tomorrow's posting hours** |
+
+How it works:
+- The window task runs through the stay-awake wrapper, writes a `work_window.json` flag with its end time,
+  starts the pipeline's tasks immediately, waits, removes the flag, and exits. Windows then sleeps on its
+  normal idle timer.
+- The publishers read the flag. While a window is open they use the short burst gap, so a window's worth of
+  posts fits inside it. The rolling 24 h caps still apply.
+- Every other task keeps its schedule but has **"wake the computer" switched off**: it runs whenever the PC
+  happens to be awake, and never wakes it.
+- Result: roughly **8–9 hours awake per day instead of 24**.
+
 ### Task settings that matter
 Every task is registered with the same settings ([`ops/register_task.ps1`](../ops/register_task.ps1)):
 

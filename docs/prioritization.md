@@ -51,9 +51,23 @@ rank higher, and under-performers rank lower.
   consistently good posts.
 - Below 20 posts in total it does nothing: no data means no guessing.
 
-Planned next: collect views, likes, shares and saves for every platform at fixed post ages (24 h and 72 h),
-and learn lift per **niche, clip length, hook style and posting hour**. That will tune the same knobs: the
-creator bonus, target clip lengths, and which hours the PC wakes up to post.
+### Performance loop v2 ([`src/analytics/performance.py`](../src/analytics/performance.py))
+1. **Collect.** Every published post, with its features (creator, niche, trend vs creator clip, length, hook
+   style, posting hour, language), gets metric snapshots at **24 h and 72 h**, so posts are compared at the same
+   age. Views come from YouTube and Facebook; Instagram uses likes + 3×comments until the insights
+   permission is granted.
+2. **Learn.** The outcome is log(views) minus the platform median: a lift that is comparable across platforms.
+   Each factor value's mean lift is shrunk by n/(n+8).
+3. **Act.**
+   - The creator bonus (±5) in ranking now comes from views across platforms, not likes alone.
+   - The **best posting hours choose when the PC wakes up to post** (see
+     [operations.md](operations.md#work-windows)).
+   - A weekly report lands in the notification digest.
+
+What it found on the first run (real account, aggregated):
+- Clips **under 20 s** do best and **over 60 s** worst.
+- A few creators clearly out- or under-perform.
+- Evening and mid-morning beat late night, which is where an even 24-hour pace had been putting many posts.
 
 ## Example (synthetic)
 | Clip | Score | Trend | Creator bonus | Source age | Priority |
