@@ -1,0 +1,13 @@
+[project]
+name = "short-form-video-pipeline"
+version = "0.1.0"
+description = "Building blocks of an autonomous short-form video pipeline: clip signals, metadata, idempotent publishing, storage hygiene."
+requires-python = ">=3.11"
+dependencies = ["numpy", "opencv-python"]
+
+[project.optional-dependencies]
+dev = ["pytest"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]

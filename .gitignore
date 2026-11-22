@@ -1,0 +1,26 @@
+# Never commit credentials, account data, media or logs
+.env
+*.env
+*.dpapi
+*token*
+*secret*
+*.pem
+auth-data/
+config/*.json
+!config/*.example.json
+data/
+logs/
+*.log
+*.db
+*.sqlite
+downloads/
+clips/
+uploads/
+work/
+*.mp4
+*.mkv
+*.webm
+*.part
+.venv/
+__pycache__/
+node_modules/
