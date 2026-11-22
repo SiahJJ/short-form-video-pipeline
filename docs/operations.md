@@ -69,6 +69,45 @@ it, and passes the exit code back to Task Scheduler, so the "Last Run Result" co
 - Restart-safe state: a job's result is saved to disk, so a crash or restart never causes re-work. Losing
   that guarantee once made a 4 GB video get clipped three times.
 
+### Crash and reboot recovery
+A power cut, a Windows Update restart or a blue screen can stop the pipeline at any point. The goal is that
+it comes back on its own, with nothing posted twice and nothing left stuck.
+
+**1. Something has to run after the restart.** This is the trap: a task set to *Run only when user is logged
+on* does **not** run while the PC sits at the sign-in screen after a reboot. That includes the wake tasks that
+start every work window. There are two ways out:
+
+| Option | How | Trade-off |
+|---|---|---|
+| **Auto sign-in, then lock** (simplest) | Turn off *Settings → Accounts → Sign-in options → "Only allow Windows Hello sign-in"*, then set auto sign-in with Microsoft's Sysinternals **Autologon** (it stores the password as an encrypted LSA secret). Add an *At log on* task that runs `rundll32.exe user32.dll,LockWorkStation`. | Everything behaves exactly as it does after a normal sign-in: per-user tokens, tray apps, the local LLM. The PC boots to a locked desktop. |
+| **Run whether logged on or not** (S4U) | Re-register tasks with `-LogonType S4U` (needs an admin shell). | No stored password, but S4U sessions have no user credentials. Secrets protected with **per-user DPAPI** may not decrypt until someone signs in, so token-based publishers can still fail. Use machine-scope protection or a vault if you go this way. |
+
+Also:
+- Run Tailscale in **unattended mode** (`tailscale set --unattended`) so Funnel/Serve stay up with nobody
+  signed in. Otherwise the platforms can't fetch your video URLs.
+- Give boot-critical servers an **At startup** trigger. Pick **active hours** in Windows Update so restarts
+  happen outside work windows.
+
+**2. A recovery pass** ([`ops/boot_recovery.py`](../ops/boot_recovery.py)) runs at sign-in **and at the
+start of every work window**:
+
+| Left behind by a crash | What recovery does |
+|---|---|
+| A work-window flag whose window died | Removes it, so publishers stop using short burst gaps |
+| A render job record stuck at `running` | Asks the render server. If it doesn't know the job, marks it `error`, and the worker re-submits the source |
+| A local server, the LLM or the tunnel not up | Starts its task again, or logs it |
+| The nightly clipping window missed while the PC was off | Starts it now instead of waiting a day |
+| An upload stopped mid-flight (`uploading` / `publishing`) | **Reports it only** |
+
+**3. Never guess about uploads.** Each publisher writes its intent to the ledger *before* the request that
+creates the post, and writes every ledger atomically (temp file plus rename). After a crash an item is in one
+of three states: never started (safe to send), confirmed (done), or **in flight**. In-flight items are never
+retried automatically, because the platform may already have the post. A human checks once and settles it.
+This cost one stuck item in the first week. A double post would cost far more.
+
+Testing it: plant a stale flag and a fake `running` job record, run the task, and check the log. Then
+`python boot_recovery.py --check` should report everything up.
+
 ## 2. Keeping the disk from filling up
 
 A 4K source can be 3–6 GB, and the pipeline briefly holds several copies of each video (download → clipper copy
