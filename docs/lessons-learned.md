@@ -25,6 +25,24 @@ Each entry: what broke, why, and the fix that stops it recurring.
   - A phrase may not end on a stop word.
   - Niche-guaranteed tags (#BreakingNews for news, #GTA alongside #GTA4).
 
+### Clipping the creator's own commercial
+- **Cause:** The LLM rates moments for hook and energy, and a well-produced sponsor read or merch plug scores
+  well. Clips of sponsored segments, a podcast's partner ad and a creator showing off their own plushies went out.
+- **Fix (`NO_ADS_V1`), before rendering:**
+  - **SponsorBlock:** a free, community-maintained database of sponsor and self-promo segments, keyed by the
+    public YouTube video ID. A moment overlapping a segment by 25 % or more is dropped. It sits behind a config
+    flag, so the clipper can stay fully offline.
+  - **The clip's own words:** one unmistakable ad phrase ("sponsored by", "use code", "in partnership with") or
+    two softer ones ("plushies", "link in the description", "download").
+  - The first version flagged GTA robbery gameplay ("jewelry store", "$400") and "get yourself"; the softer
+    word list was narrowed after checking every hit by hand.
+  - Clips already in the queue get the same check and are held everywhere.
+
+### Hooks that stacked
+Generating a hook for every caption exposed a re-entrancy bug: each re-tag prepended a new hook above the
+previous ones. The caption builder now strips everything above the `Creator - title` line before adding the
+current hook.
+
 ### Trend clips nobody watched
 - **Cause:** The trend pipeline only takes Creative Commons videos, and those come almost entirely from small
   channels. Of 209 trend videos it had picked, 126 had under 10k views or came from tiny channels: betting

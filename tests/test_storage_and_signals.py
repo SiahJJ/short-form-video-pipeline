@@ -63,3 +63,18 @@ def test_energy_bonus_for_loud_peak():
 def test_snap_to_cuts():
     c = snap({"start": 10.0, "end": 30.0}, s_cuts=[9.2, 11.0], e_cuts=[29.0, 30.6], duration=60)
     assert (c["start"], c["end"], c["length"]) == (9.2, 30.6, 21.4)
+
+
+from clip_signals.ads import ad_text, video_id
+
+
+def test_ad_reads_are_detected_but_gameplay_is_not():
+    assert ad_text("This video is sponsored by a game, use code CLIPS for a bonus")
+    assert ad_text("These are high-quality plushies of our characters")
+    assert ad_text("Yo, this is a nice jewelry store, $400 in the bag") is None
+    assert ad_text("you don't know what you get yourself into") is None
+
+
+def test_video_id_from_downloaded_filename():
+    assert video_id("Some Title [abcdefghijk].mp4") == "abcdefghijk"
+    assert video_id("no id here.mp4") is None
