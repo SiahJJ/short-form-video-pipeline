@@ -31,6 +31,8 @@ Served by the dashboard (`/tiktok`) and opened on your phone over the private ta
 - **In your TikTok inbox:** every clip that's been delivered as a draft, newest first, with an inline video
   preview (HTTP range streaming, so it scrubs on mobile), the ready caption, **Copy caption** and **Posted**.
 - **Waiting to send:** staged clips by day, best first, with size, caption and a link to the Instagram original.
+- **In your TikTok inbox** lists exactly what TikTok's status endpoint reports as waiting (refreshed every 5
+  minutes), not the helper's own checkmarks, which drifted from the app.
 - Posting is **detected automatically**: the uploader polls TikTok's status endpoint and marks a clip posted
   once TikTok reports `PUBLISH_COMPLETE`, so the **Posted** button is only a manual override.
 

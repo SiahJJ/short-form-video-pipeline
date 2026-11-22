@@ -25,6 +25,20 @@ Each entry: what broke, why, and the fix that stops it recurring.
   - A phrase may not end on a stop word.
   - Niche-guaranteed tags (#BreakingNews for news, #GTA alongside #GTA4).
 
+### Trend clips nobody watched
+- **Cause:** The trend pipeline only takes Creative Commons videos, and those come almost entirely from small
+  channels. Of 209 trend videos it had picked, 126 had under 10k views or came from tiny channels: betting
+  picks, game previews, coach pressers, live streams, and one music video picked because the band's *name*
+  contained the trending word. The AI then rated the best moment *within* each video highly (89/100), which
+  says nothing about whether anyone wants the video.
+- **Fix (`TREND_QUALITY_V1`):**
+  - A trend must appear in what the video is about, not only in the channel name.
+  - At least 10k views and a channel with 100k+ subscribers.
+  - Commentary formats are rejected (picks, predictions, previews, breakdowns, reactions, pressers, podcasts,
+    live streams).
+  - Sports trends need actual highlights.
+  - Already-queued clips that fail are held from every platform, not deleted.
+
 ### Tags about the channel, not the clip
 - **Cause:** A gaming streamer's documentary about a country went out as `#Streamer #Gamer #Gameplay #Gaming
   #VideoGames`. The creator's usual niche was hard-coded, and the clip's real topics were filtered out because
