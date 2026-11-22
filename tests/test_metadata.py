@@ -58,3 +58,29 @@ def test_hooks_retry_then_accept_grounded_answer():
 def test_hooks_give_up_rather_than_post_a_false_one():
     bad = {"hook_en": "The president rules with an iron fist", "hook_es": "Gobierno controla Perú con violencia creciente"}
     assert make_hooks("X", SRC, "", ask=lambda p, t: bad) is None
+
+
+from metadata.hashtags import creator_niche, keep_creator_tag, merge_names, topic_tags
+
+
+def test_topic_words_need_evidence_and_skip_hype():
+    tags = dict(topic_tags("THE STORY OF A NATION (Full Film)", "African Freedom Speech: Power of Independence",
+                           "the african people wanted freedom and independence"))
+    assert {"Africa", "Freedom", "Independence"} <= set(tags)
+    assert "Power" not in tags and "Film" not in tags
+    assert tags["Africa"] > tags["Speech"]          # spoken beats title-only
+
+
+def test_creator_tag_only_for_searched_creators():
+    assert keep_creator_tag(30_000_000, "gaming")
+    assert not keep_creator_tag(40_000, "gaming")
+    assert keep_creator_tag(300_000, "news")
+
+
+def test_usual_niche_must_show_up_in_the_clip():
+    assert creator_niche("gaming", "Testing everything in GTA 6", "Drowning rescue") == "gaming"
+    assert creator_niche("gaming", "A documentary about a nation", "Freedom speech") is None
+
+
+def test_split_names_are_merged():
+    assert merge_names(["Jane", "Smith", "Tennis"], ["Jane Smith serves", "beat Jane Smith"]) == ["JaneSmith", "Tennis"]

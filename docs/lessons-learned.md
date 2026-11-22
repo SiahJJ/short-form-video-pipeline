@@ -25,6 +25,21 @@ Each entry: what broke, why, and the fix that stops it recurring.
   - A phrase may not end on a stop word.
   - Niche-guaranteed tags (#BreakingNews for news, #GTA alongside #GTA4).
 
+### Tags about the channel, not the clip
+- **Cause:** A gaming streamer's documentary about a country went out as `#Streamer #Gamer #Gameplay #Gaming
+  #VideoGames`. The creator's usual niche was hard-coded, and the clip's real topics were filtered out because
+  short transcripts couldn't confirm them. Facebook also re-used captions Instagram had posted days earlier,
+  so old mistakes were repeated there.
+- **Fix:**
+  - **Topic tags:** title words the clip actually talks about ('African Freedom Speech' -> `#Africa #Freedom`),
+    confirmed by the transcript (same 5-letter stem), the uploader's description, or (weakest) the real title.
+    Hook words like "Epic" or "Power" never count.
+  - **A creator's usual niche must show up in the clip.** If it doesn't, its community tags are dropped.
+  - **The creator tag must earn its slot:** only very large channels (by subscriber count, cached for 14 days)
+    or news outlets keep it. Everyone else's slot goes to the topic.
+  - Split names are merged (`#Jane #Smith` -> `#JaneSmith`), and `#NameLive` next to `#Name` is dropped.
+  - Facebook rebuilds hashtags with the current engine at post time.
+
 ### AI hooks that add facts
 - **Cause:** for a news clip, a local model added a claim about who was "in charge" that wasn't in the source,
   and was factually wrong.

@@ -107,3 +107,63 @@ def guarantee(tags: list[str], cap: int, niche: str | None, spanish: bool, prote
         if len(tags) < cap:
             tags.append(m)
     return tags
+
+
+# ---- topic tags and creator popularity (TOPIC_TAGS_V1) ----
+POPULAR_SUBS = 5_000_000
+HYPE = {"ultimate", "epic", "insane", "crazy", "chaos", "moment", "moments", "unleashed", "drama", "power",
+        "amazing", "wild", "shocking", "reacts", "reaction", "story", "secret", "truth", "season", "trailer",
+        "full", "film", "official", "speaks", "talks", "reveals", "explained", "challenge", "tried", "beat"}
+DEMONYM = {"african": "Africa", "american": "America", "mexican": "Mexico", "japanese": "Japan",
+           "brazilian": "Brazil", "indian": "India", "canadian": "Canada", "french": "France"}
+
+
+def topic_tags(source_title: str, clip_title: str, transcript: str, description: str = "") -> list[tuple[str, int]]:
+    """What the clip is ABOUT, as (tag, score). A title word counts when the clip says it (same 5-letter stem:
+    'African' ~ 'Africa'); the uploader's description is weaker evidence; title-only words score lowest."""
+    spoken = {w[:5] for w in words(transcript) if len(w) >= 4}
+    described = {w[:5] for w in words(description) if len(w) >= 4}
+    out: dict[str, int] = {}
+    for src, pts in ((source_title, 40), (clip_title, 36)):
+        for w in re.findall(r"[A-Za-z]+", deaccent(src)):
+            lw = w.lower()
+            if len(lw) < 4 or lw in STOP or lw in FILLER or lw in HYPE:
+                continue
+            bonus = 0 if lw[:5] in spoken else -8 if lw[:5] in described else -14
+            tag = to_tag(DEMONYM.get(lw, lw.capitalize() if w.isupper() else w))
+            if tag:
+                out[tag] = max(out.get(tag, 0), pts + bonus)
+    return sorted(out.items(), key=lambda kv: -kv[1])
+
+
+def keep_creator_tag(subscribers: int | None, niche: str | None, known_anchor: bool = False) -> bool:
+    """A creator tag earns one of five slots only if people search for that creator: very large channels, or
+    news anchors/channels (news viewers search the outlet). Small channels give the slot to the topic."""
+    if niche == "news":
+        return known_anchor or bool(subscribers and subscribers >= 250_000)
+    return bool(subscribers and subscribers >= POPULAR_SUBS)
+
+
+def creator_niche(fixed: str | None, source_title: str, clip_title: str) -> str | None:
+    """A creator's usual niche applies only when this clip's own titles mention it: a gaming streamer's
+    documentary about a country gets that country's tags, not #Gaming #Gamer."""
+    if not fixed:
+        return None
+    own = " " + " ".join(words(f"{source_title} {clip_title}")) + " "
+    return fixed if any(f" {' '.join(words(k))} " in own for k in NICHES[fixed][0]) else None
+
+
+def merge_names(tags: list[str], texts: list[str]) -> list[str]:
+    """#Jane #Smith -> #JaneSmith when the pair appears side by side at least twice in the titles/description."""
+    seq = words(" ".join(texts))
+    pairs: dict[tuple[str, str], int] = {}
+    for a, b in zip(seq, seq[1:]):
+        pairs[(a, b)] = pairs.get((a, b), 0) + 1
+    out = list(tags)
+    for a in list(out):
+        for b in list(out):
+            if a in out and b in out and a != b and pairs.get((a.lower(), b.lower()), 0) >= 2 \
+                    and re.fullmatch(r"[A-Z][a-z]+", a) and re.fullmatch(r"[A-Z][a-z]+", b):
+                out[out.index(a)] = a + b
+                out.remove(b)
+    return out
