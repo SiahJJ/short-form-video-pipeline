@@ -25,6 +25,37 @@ Each entry: what broke, why, and the fix that stops it recurring.
   - A phrase may not end on a stop word.
   - Niche-guaranteed tags (#BreakingNews for news, #GTA alongside #GTA4).
 
+### Silence trimming cut out the action
+- **Cause:** The clipper drops pauses so talking-head clips stay tight. In a sprint race, the race itself has
+  no words, so the trim removed it and left 12 seconds of build-up.
+- **Fix (`ACTION_KEEP_V1`):** if trimming would remove more than a quarter of a clip, or take it under the
+  minimum length, the clip is kept whole. Talking clips still lose their pauses.
+
+### Hashtags nobody uses
+- **Cause:** Tags were built from title words, which produced `#RacedUsain`, `#Clash` and `#Speech`.
+- **Fix (`WELL_USED_TAGS_V1`):** every tag must be one of:
+  - on a curated list of widely used tags per niche (TikTok-only tags stay on TikTok);
+  - a real named entity: a multi-word tag that is a Wikipedia article title, or a single word whose
+    article describes a person, place, team, game or film;
+  - the creator's tag, for big channels.
+- Hook words map to real tags (clash becomes `#Fight`), a franchise tag pulls in its umbrella (`#Avengers`
+  brings `#Marvel`), and `#Usain` is completed to `#UsainBolt` from the title.
+
+### Two copies of every clip, and 14-day leftovers
+- **Cause:** The worker *copied* each finished clip out of the clipper's output folder, and unsaved renders
+  stayed for 14 days. That was about 19 GB of duplicates, enough to drain the disk overnight while the PC
+  slept and the hourly cleanup couldn't run.
+- **Fix:**
+  - Clips are *moved*. Not hard-linked: the clipper reuses names like `01-x.mp4`, and ffmpeg overwrites in
+    place, which would corrupt a linked copy.
+  - Unsaved renders go after 12 hours.
+  - Cleanup runs every 15 minutes during the night window and at the start of every posting window.
+
+### The active queue was full of drafts that couldn't post
+Only the top 25 drafts by priority could publish, but blocked drafts and drafts still waiting for captions
+used up those slots, so only 9 were really publishable. Slots now go only to drafts that can post. Posting
+windows run 60 minutes and extend to 90 while Instagram is behind its daily target.
+
 ### Clipping the creator's own commercial
 - **Cause:** The LLM rates moments for hook and energy, and a well-produced sponsor read or merch plug scores
   well. Clips of sponsored segments, a podcast's partner ad and a creator showing off their own plushies went out.
