@@ -70,6 +70,25 @@ still fires either way.
   power loss or a crash; a planned-restart event means Windows Update) and whether it signed itself in. If it
   didn't, sign in remotely (Chrome Remote Desktop works on Windows Home).
 
+### Lesson: anything a work window starts must be its own task
+Task Scheduler ends a task's leftover processes when the task finishes. Two helpers fell into that trap: the
+sleep step and a recovery restart of the local LLM server. Each looked fine when tested on its own, and failed
+only inside a real window. Both are now on-demand scheduled tasks that the window *starts*. A related bug: a
+sleep step still waiting from one window put the PC back to sleep 90 seconds into the next. Sleep is now
+refused while a window's flag file is open, and every window cancels any leftover sleep step when it starts.
+
+### Pre-trip failure drill
+Before leaving the pipeline alone, each scenario is exercised for real, not just inspected:
+- a leftover sleep step meeting a new window;
+- the LLM server killed and restored by recovery;
+- each login's expiry date;
+- disk floors under a night of downloads;
+- queue depth against posting caps;
+- a simulated reboot recovery.
+
+The digest now warns 3 weeks before any login expires, lists the PC's awake times, and includes the captions
+for drafts waiting in the TikTok app, so they can be posted while the PC sleeps.
+
 ### No pop-up windows
 Console programs started by Task Scheduler normally flash a window and steal focus (a problem mid-game). Every
 action goes through [`ops/run_hidden.vbs`](../ops/run_hidden.vbs):
