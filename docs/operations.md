@@ -89,6 +89,27 @@ Before leaving the pipeline alone, each scenario is exercised for real, not just
 The digest now warns 3 weeks before any login expires, lists the PC's awake times, and includes the captions
 for drafts waiting in the TikTok app, so they can be posted while the PC sleeps.
 
+### End-of-day catch-up window
+The original catch-up was "at 11 PM, post the rest back to back", but under the work-window schedule the PC is
+asleep at 11 PM. A dedicated **10:30 PM catch-up window** wakes the PC and stays open while any platform is short
+of its 24-hour cap and has something ready: Instagram below 50, Facebook below 10 (its per-window limit is lifted
+here), YouTube below 10 and not in YouTube's own cooldown. It ends when everything is caught up or the queues are
+empty, at most 90 minutes.
+
+### Always-on pages on a Raspberry Pi
+The PC sleeps most of the day, so the dashboard and TikTok helper are mirrored on an always-on Pi:
+- The PC pushes a snapshot every 5 minutes while awake and once more before it sleeps: page data, the inbox
+  captions, and 480p previews (0.4 MB instead of 21 MB). It goes over SSH with a dedicated key, across Tailscale.
+- "Posted" taps on the Pi are queued there and applied by the PC at its next wake.
+- A banner on each page shows whether the data is live or how old it is, and when the PC next wakes.
+- The Pi side caps each app's memory and restarts it if it goes over, limits the system journal to 100 MB, and
+  runs a daily disk cleanup. The PC stops sending previews if the Pi gets low on space.
+
+### Lesson: escape sequences in generated code
+Patch scripts that wrote regexes through normal (non-raw) strings turned `` into a backspace and `` into a
+bell character. The patterns still compiled and simply never matched, so tests that hit other branches of the
+same pattern passed. Now every edited file is scanned for control characters after each change.
+
 ### No pop-up windows
 Console programs started by Task Scheduler normally flash a window and steal focus (a problem mid-game). Every
 action goes through [`ops/run_hidden.vbs`](../ops/run_hidden.vbs):
